@@ -51,6 +51,7 @@ AV.Cloud.define('resend_mails', function(req) {
 });
 
 AV.Cloud.define('self_wake', function(req) {
+    console.log('run self_wake ~ ', process.env.ADMIN_URL);
     request(process.env.ADMIN_URL, function (error, response, body) {
         console.log('自唤醒任务执行成功，响应状态码为:', response && response.statusCode);
     });
