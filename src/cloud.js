@@ -25,7 +25,7 @@ AV.Cloud.afterSave('Comment', function (request) {
             console.log(currentComment.get('nick') + " @ 了" + parentComment.get('nick') + ", 但被 @ 的人没留邮箱... 无法通知");
         }
     }, function (error) {
-        console.warn('好像 @ 了一个不存在的人!!!');
+        console.warn('好像 @ 了一个不存在的人!!!', error && error.message);
     });
 });
 

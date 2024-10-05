@@ -21,8 +21,8 @@ if (process.env.SMTP_SERVICE != null) {
 
 const transporter = nodemailer.createTransport(config);
 let templateName = process.env.TEMPLATE_NAME ?  process.env.TEMPLATE_NAME : "default";
-let noticeTemplate = ejs.compile(fs.readFileSync(path.resolve(process.cwd(), 'template', templateName, 'notice.ejs'), 'utf8'));
-let sendTemplate = ejs.compile(fs.readFileSync(path.resolve(process.cwd(), 'template', templateName, 'send.ejs'), 'utf8'));
+let noticeTemplate = ejs.compile(fs.readFileSync(path.resolve(process.cwd(), 'src/template', templateName, 'notice.ejs'), 'utf8'));
+let sendTemplate = ejs.compile(fs.readFileSync(path.resolve(process.cwd(), 'src/template', templateName, 'send.ejs'), 'utf8'));
 
 
 // 提醒站长
