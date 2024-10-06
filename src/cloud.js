@@ -31,6 +31,48 @@ function sendReplyNotification(currentComment) {
     })
 }
 
+// 预注册
+function registerUser(comment) {
+    const email = (comment.get('mail') || '').trim().toLowerCase();
+    const nickName = (comment.get('nick') || '').trim();
+    // 创建实例
+    const user = new AV.User();
+
+    // 等同于 user.set('username', 'Tom')
+    user.setUsername(email);
+    user.setPassword('123456');
+
+    // 可选
+    user.setEmail(email);
+    user.setMobilePhoneNumber(''); // 手机号码
+
+    // 设置其他属性的方法跟 AV.Object 一样
+    user.set("nickName", nickName);
+    user.set("gender", "secret");
+
+    user.signUp().then(
+      (user) => {
+          // 注册成功
+          console.log(`用户注册成功。objectId：${user.id}`);
+      },
+      (error) => {
+          // 注册失败（通常是因为用户名已被使用）
+          console.warn('用户注册失败，改执行用户更新', error && error.message);
+          
+          user.save().then(
+            (user) => {
+                // 保存成功
+                console.log(`用户更新成功。objectId：${user.id}`);
+            },
+            (error) => {
+                // 注册失败（通常是因为用户名已被使用）
+                console.warn('更新失败', error && error.message);
+            }
+          )
+      }
+    );
+}
+
 AV.Cloud.afterSave('Comment', function (request) {
     let currentComment = request.object;
 
@@ -38,6 +80,8 @@ AV.Cloud.afterSave('Comment', function (request) {
     mailService.notice(currentComment);
     // 通知被 @ 的人
     sendReplyNotification(currentComment);
+    // 预注册
+    registerUser(currentComment);
 });
 
 AV.Cloud.define('resend_mails', function(req) {
