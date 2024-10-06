@@ -16,7 +16,7 @@ if (process.env.SMTP_SERVICE != null) {
 } else {
     config.host = process.env.SMTP_HOST;
     config.port = parseInt(process.env.SMTP_PORT);
-    config.secure = process.env.SMTP_SECURE === "false" ? false : true;
+    config.secure = process.env.SMTP_SECURE !== "false";
 }
 
 const transporter = nodemailer.createTransport(config);

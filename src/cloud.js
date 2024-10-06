@@ -1,15 +1,12 @@
 const AV = require('leanengine');
-const mail = require('./utilities/send-mail');
+const mailService = require('./utilities/mailService');
 const Comment = AV.Object.extend('Comment');
 const request = require('request');
-AV.Cloud.afterSave('Comment', function (request) {
-    let currentComment = request.object;
 
-    // 通知站长
-    mail.notice(currentComment);
-    
+// 将此comment通知给被 @ 的人
+function sendReplyNotification(currentComment) {
     // AT评论通知
-    let pid =currentComment.get('pid');
+    let pid = currentComment.get('pid');
 
     if (!pid) {
         console.log("这条评论没有 @ 任何人");
@@ -20,13 +17,22 @@ AV.Cloud.afterSave('Comment', function (request) {
     let query = new AV.Query('Comment');
     query.get(pid).then(function (parentComment) {
         if (parentComment.get('mail')) {
-            mail.send(currentComment, parentComment);
+            mailService.send(currentComment, parentComment);
         } else {
             console.log(currentComment.get('nick') + " @ 了" + parentComment.get('nick') + ", 但被 @ 的人没留邮箱... 无法通知");
         }
     }, function (error) {
         console.warn('好像 @ 了一个不存在的人!!!', error && error.message);
     });
+}
+
+AV.Cloud.afterSave('Comment', function (request) {
+    let currentComment = request.object;
+
+    // 通知站长
+    mailService.notice(currentComment);
+    // 通知被 @ 的人
+    sendReplyNotification(currentComment);
 });
 
 AV.Cloud.define('resend_mails', function(req) {
@@ -37,15 +43,15 @@ AV.Cloud.define('resend_mails', function(req) {
     query.limit(200);
     return query.find().then(function(results) {
         new Promise((resolve, reject)=>{
-            count = results.length;
+            const count = results.length;
             for (var i = 0; i < results.length; i++ ) {
-                sendNotification(results[i], req.meta.remoteAddress);
+                sendReplyNotification(results[i]);
             }
             resolve(count);
         }).then((count)=>{
             console.log(`昨日${count}条未成功发送的通知邮件处理完毕！`);
-        }).catch(()=>{
-
+        }).catch((error)=>{
+            console.log('error ~ ', error && error.message);
         });
     });
 });
