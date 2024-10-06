@@ -41,14 +41,11 @@ function registerUser(comment) {
     // 等同于 user.set('username', 'Tom')
     user.setUsername(email);
     user.setPassword('123456');
-
     // 可选
     user.setEmail(email);
-    user.setMobilePhoneNumber(''); // 手机号码
 
     // 设置其他属性的方法跟 AV.Object 一样
     user.set("nickName", nickName);
-    user.set("gender", "secret");
 
     user.signUp().then(
       (user) => {
