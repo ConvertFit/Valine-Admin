@@ -157,6 +157,7 @@ AV.Cloud.define('comment_statistics', function(req) {
             const parentCommentList = []; // 被评论的评论
             const parentMailList = []; // 被评论的评论的邮箱
             const list = [];
+            console.log('commentList.length ~ ', commentList.length);
             for (comment of commentList) {
                 let mail = comment.get('mail');
                 if (mail && mail.trim()) {
@@ -169,9 +170,10 @@ AV.Cloud.define('comment_statistics', function(req) {
                 const parentCommentId = comment.get('pid');
                 if (parentCommentId) {
                     const parentCommentQuery = new AV.Query('Comment');
-                    parentCommentQuery.equalTo('pid', parentCommentId);
+                    parentCommentQuery.equalTo('id', parentCommentId);
                     await parentCommentQuery.find().then((parentComments)=>{
                         const [parentComment] = parentComments;
+                        console.log(`${parentCommentId} parentComments.length ~ `, parentComments.length);
                         parentCommentList.push(parentComment);
                         let parentMail = parentComment.get('mail');
                         console.log('parentComment', parentMail, mail);
