@@ -169,7 +169,9 @@ AV.Cloud.define('comment_statistics', function(req) {
                 const parentCommentId = comment.get('pid');
                 if (parentCommentId) {
                     const parentCommentQuery = new AV.Query('Comment');
-                    await parentCommentQuery.find(parentCommentId).then((parentComment)=>{
+                    parentCommentQuery.equalTo('pid', parentCommentId);
+                    await parentCommentQuery.find().then((parentComments)=>{
+                        const [parentComment] = parentComments;
                         parentCommentList.push(parentComment);
                         let parentMail = parentComment.get('mail');
                         // 被评论，且评论者和被评论者非同一个人
