@@ -170,7 +170,7 @@ AV.Cloud.define('comment_statistics', function(req) {
                 const parentCommentId = comment.get('pid');
                 if (parentCommentId) {
                     const parentCommentQuery = new AV.Query('Comment');
-                    parentCommentQuery.equalTo('id', parentCommentId);
+                    parentCommentQuery.equalTo('objectId', parentCommentId);
                     await parentCommentQuery.find().then((parentComments)=>{
                         const [parentComment] = parentComments;
                         console.log(`${parentCommentId} parentComments.length ~ `, parentComments.length);
