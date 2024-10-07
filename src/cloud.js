@@ -151,7 +151,7 @@ AV.Cloud.define('comment_statistics', function(req) {
     query.greaterThanOrEqualTo('createdAt', new Date(startTs));
     query.limit(200);
     return query.find().then(function(commentList) {
-        return new Promise((resolve)=>{
+        return new Promise(async (resolve)=>{
             const commentCount = commentList.length;
             const mailList = [];
             const parentCommentList = []; // 被评论的评论
@@ -169,7 +169,7 @@ AV.Cloud.define('comment_statistics', function(req) {
                 const parentCommentId = comment.get('pid');
                 if (parentCommentId) {
                     const parentCommentQuery = new AV.Query('Comment');
-                    parentCommentQuery.find(parentCommentId).then((parentComment)=>{
+                    await parentCommentQuery.find(parentCommentId).then((parentComment)=>{
                         parentCommentList.push(parentComment);
                         let parentMail = parentComment.get('mail');
                         // 被评论，且评论者和被评论者非同一个人
