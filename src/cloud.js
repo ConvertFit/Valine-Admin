@@ -30,44 +30,66 @@ function sendReplyNotification(currentComment) {
         });
     })
 }
-
-// 预注册
-function registerUser(comment) {
-    const email = (comment.get('mail') || '').trim().toLowerCase();
-    const nickName = (comment.get('nick') || '').trim();
+// 用户注册
+function userSignUp(payload, needSave = false) {
     // 创建实例
     const user = new AV.User();
+    Object.keys(payload).forEach(key => {
+        if (key === 'password') {
+            user.setPassword(payload[key] || '123456');
+        } else {
+            // 非password全部trim下
+            const value = (payload[key] || '').trim();
+            if (key === 'email') {
+                user.setUsername(value.toLowerCase());
+                user.setEmail(value.toLowerCase());
+            } else {
+                user.set(key, value);
+            }
+        }
+    })
 
-    // 等同于 user.set('username', 'Tom')
-    user.setUsername(email);
-    user.setPassword('123456');
-    // 可选
-    user.setEmail(email);
-
-    // 设置其他属性的方法跟 AV.Object 一样
-    user.set("nickName", nickName);
-
-    user.signUp().then(
-      (user) => {
-          // 注册成功
-          console.log(`用户注册成功。objectId：${user.id}`);
+    return new Promise((resolve, reject) => {
+        user.signUp().then(
+          (result) => {
+              // 注册成功
+              console.log(`注册用户${result.email}成功。objectId：${result.id}`);
+              resolve(result);
+          },
+          (error) => {
+              // 注册失败（通常是因为用户名已被使用）
+              if (needSave) {
+                  console.warn(`注册用户${user.email}失败，原因：`, error && error.message, '尝试改为执行更新用户');
+                  userSave(user);
+              } else {
+                  console.warn(`注册用户${user.email}失败，原因：`, error && error.message);
+              }
+              reject(error);
+          }
+        ); 
+    });
+}
+// 更新用户
+function userSave(user) {
+    return user.save().then(
+      (result) => {
+          // 保存成功
+          console.log(`更新用户${result.email}成功。objectId：${result.id}`);
       },
       (error) => {
           // 注册失败（通常是因为用户名已被使用）
-          console.warn('用户注册失败，改执行用户更新', error && error.message);
-          
-          user.save().then(
-            (user) => {
-                // 保存成功
-                console.log(`用户更新成功。objectId：${user.id}`);
-            },
-            (error) => {
-                // 注册失败（通常是因为用户名已被使用）
-                console.warn('更新失败', error && error.message);
-            }
-          )
+          console.warn(`更新用户${user.email}失败，原因：`, error && error.message);
       }
-    );
+    )
+}
+
+// 根据评论注册用户
+function registerUserFromComment(comment) {
+    return userSignUp({
+        email: comment.get('mail'),
+        password: '',
+        nickName: comment.get('nick'),
+    }, true);
 }
 
 AV.Cloud.afterSave('Comment', function (request) {
@@ -77,8 +99,8 @@ AV.Cloud.afterSave('Comment', function (request) {
     mailService.notice(currentComment);
     // 通知被 @ 的人
     sendReplyNotification(currentComment);
-    // 预注册
-    registerUser(currentComment);
+    // 根据评论注册用户
+    registerUserFromComment(currentComment);
 });
 
 AV.Cloud.define('resend_mails', function(req) {
