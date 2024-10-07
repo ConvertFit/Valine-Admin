@@ -49,36 +49,33 @@ function userSignUp(payload, needSave = false) {
         }
     })
 
-    return new Promise((resolve, reject) => {
-        user.signUp().then(
-          (result) => {
-              // 注册成功
-              console.log(`注册用户${result.email}成功。objectId：${result.id}`);
-              resolve(result);
-          },
-          (error) => {
-              // 注册失败（通常是因为用户名已被使用）
-              if (needSave) {
-                  console.warn(`注册用户${user.email}失败，原因：`, error && error.message, '尝试改为执行更新用户');
-                  userSave(user);
-              } else {
-                  console.warn(`注册用户${user.email}失败，原因：`, error && error.message);
-              }
-              reject(error);
+    return user.signUp().then(
+      (result) => {
+          // 注册成功
+          console.log(`注册用户${result.email}成功。objectId：${result.id}`);
+          return result;
+      },
+      (error) => {
+          // 注册失败（通常是因为用户名已被使用）
+          if (needSave) {
+              console.warn(`注册用户${payload.email}失败，原因：`, error && error.message, '尝试改为执行更新用户');
+              userSave(user, payload);
+          } else {
+              console.warn(`注册用户${payload.email}失败，原因：`, error && error.message);
           }
-        ); 
-    });
+      });
 }
 // 更新用户
-function userSave(user) {
+function userSave(user, payload) {
     return user.save().then(
       (result) => {
           // 保存成功
           console.log(`更新用户${result.email}成功。objectId：${result.id}`);
+          return result
       },
       (error) => {
           // 注册失败（通常是因为用户名已被使用）
-          console.warn(`更新用户${user.email}失败，原因：`, error && error.message);
+          console.warn(`更新用户${payload.email}失败，原因：`, error && error.message);
       }
     )
 }
