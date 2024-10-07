@@ -93,8 +93,7 @@ function registerUserFromComment(comment) {
 }
 
 AV.Cloud.afterSave('Comment', function (request) {
-    let currentComment = request.object;
-
+    const currentComment = request.object;
     // 通知站长
     mailService.notice(currentComment);
     // 通知被 @ 的人
@@ -104,7 +103,7 @@ AV.Cloud.afterSave('Comment', function (request) {
 });
 
 AV.Cloud.define('resend_mails', function(req) {
-    let query = new AV.Query(Comment);
+    const query = new AV.Query(Comment);
     query.greaterThanOrEqualTo('createdAt', new Date(new Date().getTime() - 24*60*60*1000));
     query.notEqualTo('isNotified', true);
     // 如果你的评论量很大，可以适当调高数量限制，最高1000
@@ -121,10 +120,101 @@ AV.Cloud.define('resend_mails', function(req) {
         }).then(({ totalCount, successCount })=>{
             console.log(`昨日${totalCount}条未成功发送的通知邮件，现已成功处理${successCount}条！`);
         }).catch((error)=>{
-            console.log('error ~ ', error && error.message);
+            console.warn('resend_mails error ~ ', error && error.message);
         });
     });
 });
+// 更新计数
+function updateCount(result, key, prop) {
+    key = key.toLowerCase();
+    let target = result.find(item => item.key === key);
+    if (!target) {
+        target = {
+            key,
+        }
+        result.push(target);
+    }
+    if (!target[prop]) {
+        target[prop] = 0;
+    }
+    target[prop] += 1;
+    
+    return result;
+}
+// 评论统计
+AV.Cloud.define('comment_statistics', function(req) {
+    const query = new AV.Query(Comment);
+    // 统计前7天零点以后的评论
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startTs = todayStart.getTime() - 6*24*60*60*1000;
+    query.greaterThanOrEqualTo('createdAt', new Date(startTs));
+    query.limit(200);
+    return query.find().then(function(commentList) {
+        return new Promise((resolve)=>{
+            const commentCount = commentList.length;
+            const mailList = [];
+            const parentCommentList = []; // 被评论的评论
+            const parentMailList = []; // 被评论的评论的邮箱
+            const list = [];
+            for (comment of commentList) {
+                let mail = comment.get('mail');
+                if (mail && mail.trim()) {
+                    mail = mail.trim().toLowerCase();
+                    updateCount(list, mail, 'comment');
+                    if (!mailList.includes(mail)) {
+                        mailList.push(mail);
+                    }
+                }
+                const parentCommentId = comment.get('pid');
+                if (parentCommentId) {
+                    const parentCommentQuery = new AV.Query('Comment');
+                    parentCommentQuery.find(parentCommentId).then((parentComment)=>{
+                        parentCommentList.push(parentComment);
+                        let parentMail = parentComment.get('mail');
+                        // 被评论，且评论者和被评论者非同一个人
+                        if (parentMail && parentMail.trim()) {
+                            parentMail = parentMail.trim().toLowerCase();
+                            if (parentMail !== mail) {
+                                updateCount(list, parentMail, 'commented');
+                                if (!parentMailList.includes(parentMail)) {
+                                    parentMailList.push(parentMail);
+                                }
+                            }
+                        }
+                    })
+                }
+            }
+            resolve({ 
+                commentCount,
+                mailCount: mailList.length,
+                parentCommentCount: parentCommentList.length,
+                parentMailCount: parentMailList.length,
+                list,
+            });
+        }).then(value => {
+            const { commentCount, mailCount, parentCommentCount, parentMailCount, list } = value;
+            console.log(`过去7天统计数据：`);
+            console.log(`共有${commentCount}条评论，涉及${mailCount}个邮箱；`);
+            console.log(`共有${parentCommentCount}条评论被@，涉及${parentMailCount}个邮箱；`);
+            const maxCommentObj = list.reduce((maxObj, obj) => {
+                return obj.comment > maxObj.comment ? obj : maxObj;
+            }, {
+                comment: 0
+            });
+            console.log(`${maxCommentObj.key}评论次数最多，共${maxCommentObj.comment}条；`);
+            const maxCommentedObj = list.reduce((maxObj, obj) => {
+                return obj.commented > maxObj.commented ? obj : maxObj;
+            }, {
+                commented: 0
+            });
+            console.log(`${maxCommentedObj.key}被@次数最多，共${maxCommentedObj.comment}次。`);
+        }).catch((error)=>{
+            console.warn('comment_statistics error ~ ', error && error.message);
+        });
+    });
+})
+
 
 AV.Cloud.define('self_wake', function(req) {
     console.log('run self_wake ~ ', process.env.ADMIN_URL);
