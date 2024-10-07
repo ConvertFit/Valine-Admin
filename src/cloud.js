@@ -174,6 +174,7 @@ AV.Cloud.define('comment_statistics', function(req) {
                         const [parentComment] = parentComments;
                         parentCommentList.push(parentComment);
                         let parentMail = parentComment.get('mail');
+                        console.log('parentComment', parentComment, parentMail);
                         // 被评论，且评论者和被评论者非同一个人
                         if (parentMail && parentMail.trim()) {
                             parentMail = parentMail.trim().toLowerCase();
