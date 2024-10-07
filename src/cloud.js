@@ -52,7 +52,7 @@ function userSignUp(payload, needSave = false) {
     return user.signUp().then(
       (result) => {
           // 注册成功
-          console.log(`注册用户${result.email}成功。objectId：${result.id}`);
+          console.log(`注册用户${payload.email}成功。objectId：${result.id}`);
           return result;
       },
       (error) => {
