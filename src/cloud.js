@@ -108,6 +108,7 @@ function sendTrialComment(data) {
     comment.set('comment', '我成功使用了试用模式');
     comment.set('url', '/convert/do');
     comment.set('ua', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0');
+    comment.set('insertedAt', new Date());
     
     comment.setACL(getAcl());
     comment.save().then(() => {
