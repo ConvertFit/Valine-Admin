@@ -94,6 +94,7 @@ AV.Cloud.afterSave('Record', function (request) {
     // 根据转换记录注册用户
     registerUser({
         email: currentRecord.address,
+        userName: (currentRecord.type || '') + '跑友'
     });
 });
 
