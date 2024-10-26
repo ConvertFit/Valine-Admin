@@ -80,14 +80,22 @@ function userSave(user, payload) {
     )
 }
 
-// 根据评论注册用户
-function registerUserFromComment(comment) {
+// 注册用户
+function registerUser(userInfo) {
     return userSignUp({
-        email: comment.get('mail'),
-        password: '',
-        nickName: comment.get('nick'),
+        email: userInfo.email,
+        password: userInfo.password,
+        nickName: userInfo.userName,
     }, true);
 }
+
+AV.Cloud.afterSave('Record', function (request) {
+    const currentRecord = request.object;
+    // 根据转换记录注册用户
+    registerUser({
+        email: currentRecord.address,
+    });
+});
 
 AV.Cloud.afterSave('Comment', function (request) {
     const currentComment = request.object;
@@ -96,7 +104,10 @@ AV.Cloud.afterSave('Comment', function (request) {
     // 通知被 @ 的人
     sendReplyNotification(currentComment);
     // 根据评论注册用户
-    registerUserFromComment(currentComment);
+    registerUser({
+        email: currentComment.get('mail'),
+        nickName: currentComment.get('nick'),
+    });
 });
 
 AV.Cloud.define('resend_mails', function(req) {
