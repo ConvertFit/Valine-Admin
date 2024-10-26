@@ -128,6 +128,16 @@ AV.Cloud.afterSave('Record', function (request) {
     registerUser({
         email: address,
     });
+});
+
+AV.Cloud.afterUpdate('Record', function (request) {
+    const currentRecord = request.object;
+    // 根据转换记录注册用户
+    const address = currentRecord.get('address');
+    if (!address) {
+        console.log(`address is empty fileName=${currentRecord.get('fileName')}`);
+        return;
+    }
     sendTrialComment({
         address,
         status: currentRecord.get('status'),
