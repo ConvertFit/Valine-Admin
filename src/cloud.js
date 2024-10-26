@@ -92,12 +92,13 @@ function registerUser(userInfo) {
 AV.Cloud.afterSave('Record', function (request) {
     const currentRecord = request.object;
     // 根据转换记录注册用户
-    if (!currentRecord.address) {
-        console.log(`address is empty fileName=${currentRecord.fileName}`, currentRecord);
+    const address = currentRecord.get('address');
+    if (!address) {
+        console.log(`address is empty fileName=${currentRecord.get('fileName')}`);
         return;
     }
     registerUser({
-        email: currentRecord.address,
+        email: address,
     });
 });
 
