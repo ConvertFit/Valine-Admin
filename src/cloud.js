@@ -2,7 +2,13 @@ const AV = require('leanengine');
 const mailService = require('./utilities/mailService');
 const Comment = AV.Object.extend('Comment');
 const request = require('request');
-
+// setting access
+function getAcl() {
+    let acl = new AV.ACL();
+    acl.setPublicReadAccess(!0);
+    acl.setPublicWriteAccess(!1);
+    return acl;
+}
 // 将此comment通知给被 @ 的人
 function sendReplyNotification(currentComment) {
     return new Promise((resolve, reject)=>{
@@ -88,6 +94,28 @@ function registerUser(userInfo) {
         nickName: userInfo.userName,
     }, true);
 }
+// 将试用模式生成的转换记录同步到评论
+function sendTrialComment(data) {
+    if (!data.address || data.status !== 'success' || !/^trial_/.test(data.recordMode)) {
+        console.log('No need to sync record to comment, ignore.');
+        console.log(`address=${data.address} status=${data.status} recordMode=${data.recordMode}`);
+        return;
+    }
+    const comment = new Comment();
+    const nickName = (data.type || '') + '跑友'
+    comment.set('mail', data.address);
+    comment.set('nick', nickName);
+    comment.set('comment', '我成功使用了试用模式');
+    comment.set('url', '/convert/do');
+    comment.set('ua', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0');
+    
+    comment.setACL(getAcl());
+    comment.save().then(() => {
+        console.log('sendTrialComment success ~ ', data.address);
+    }).catch(err => {
+        console.error('sendTrialComment error ~ ', err && err.message, data.address);
+    })
+}
 
 AV.Cloud.afterSave('Record', function (request) {
     const currentRecord = request.object;
@@ -99,6 +127,12 @@ AV.Cloud.afterSave('Record', function (request) {
     }
     registerUser({
         email: address,
+    });
+    sendTrialComment({
+        address,
+        status: currentRecord.get('status'),
+        recordMode: currentRecord.get('recordMode'),
+        type: currentRecord.get('type'),
     });
 });
 
