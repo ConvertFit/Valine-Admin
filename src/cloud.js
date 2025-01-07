@@ -105,7 +105,7 @@ function sendTrialComment(data) {
     const nickName = (data.type || '') + '跑友'
     comment.set('mail', data.address);
     comment.set('nick', nickName);
-    comment.set('comment', '我成功使用了试用模式');
+    comment.set('comment', /harmonyOS/.test(data.recordMode) ? '我成功使用了Harmony OS NEXT元服务' : '我成功使用了试用模式');
     comment.set('url', '/convert/do');
     comment.set('ua', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0');
     comment.set('insertedAt', new Date());
