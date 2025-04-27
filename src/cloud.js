@@ -58,16 +58,16 @@ function userSignUp(payload, needSave = false) {
     return user.signUp().then(
       (result) => {
           // 注册成功
-          console.log(`注册用户${payload.email}成功。objectId：${result.id}`);
+          console.log(`注册用户${payload.email}_${payload.huaweiUnionID}成功。objectId：${result.id}`);
           return result;
       },
       (error) => {
           // 注册失败（通常是因为用户名已被使用）
           if (needSave) {
-              console.warn(`注册用户${payload.email}失败，原因：`, error && error.message, '尝试改为执行更新用户');
+              console.warn(`注册用户${payload.email}_${payload.huaweiUnionID}失败，原因：`, error && error.message, '尝试改为执行更新用户');
               userSave(user, payload);
           } else {
-              console.warn(`注册用户${payload.email}失败，原因：`, error && error.message);
+              console.warn(`注册用户${payload.email}_${payload.huaweiUnionID}失败，原因：`, error && error.message);
           }
       });
 }
@@ -76,12 +76,12 @@ function userSave(user, payload) {
     return user.save().then(
       (result) => {
           // 保存成功
-          console.log(`更新用户${result.email}成功。objectId：${result.id}`);
+          console.log(`更新用户${result.email}_${result.huaweiUnionID}成功。objectId：${result.id}`);
           return result
       },
       (error) => {
           // 注册失败（通常是因为用户名已被使用）
-          console.warn(`更新用户${payload.email}失败，原因：`, error && error.message);
+          console.warn(`更新用户${payload.email}_${payload.huaweiUnionID}失败，原因：`, error && error.message);
       }
     )
 }
@@ -92,6 +92,7 @@ function registerUser(userInfo) {
         email: userInfo.email,
         password: userInfo.password,
         nickName: userInfo.userName,
+        huaweiUnionID: userInfo.UnionID
     }, true);
 }
 // 将试用模式生成的转换记录同步到评论
@@ -122,12 +123,14 @@ AV.Cloud.afterSave('Record', function (request) {
     const currentRecord = request.object;
     // 根据转换记录注册用户
     const address = currentRecord.get('address');
+    const UnionID = currentRecord.get('UnionID');
     if (!address) {
         console.log(`address is empty fileName=${currentRecord.get('fileName')}`);
         return;
     }
     registerUser({
         email: address,
+        UnionID,
     });
 });
 
