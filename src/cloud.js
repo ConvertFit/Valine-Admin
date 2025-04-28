@@ -92,7 +92,7 @@ function registerUser(userInfo) {
         email: userInfo.email,
         password: userInfo.password,
         nickName: userInfo.userName,
-        huaweiUnionID: userInfo.UnionID
+        huaweiUnionID: userInfo.unionID
     }, true);
 }
 // 将试用模式生成的转换记录同步到评论
@@ -123,14 +123,14 @@ AV.Cloud.afterSave('Record', function (request) {
     const currentRecord = request.object;
     // 根据转换记录注册用户
     const address = currentRecord.get('address');
-    const UnionID = currentRecord.get('UnionID');
+    const unionID = currentRecord.get('unionID');
     if (!address) {
         console.log(`address is empty fileName=${currentRecord.get('fileName')}`);
         return;
     }
     registerUser({
         email: address,
-        UnionID,
+        unionID,
     });
 });
 
