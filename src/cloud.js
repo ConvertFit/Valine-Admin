@@ -91,7 +91,7 @@ function registerUser(userInfo) {
     return userSignUp({
         email: userInfo.email,
         password: userInfo.password,
-        nickName: userInfo.userName,
+        nickName: userInfo.nickName,
         huaweiUnionID: userInfo.unionID
     }, true);
 }
@@ -124,12 +124,14 @@ AV.Cloud.afterSave('Record', function (request) {
     // 根据转换记录注册用户
     const address = currentRecord.get('address');
     const unionID = currentRecord.get('unionID');
+    const nickName = currentRecord.get('nick');
     if (!address) {
         console.log(`address is empty fileName=${currentRecord.get('fileName')}`);
         return;
     }
     registerUser({
         email: address,
+        nickName,
         unionID,
     });
 });
