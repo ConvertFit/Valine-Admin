@@ -73,6 +73,12 @@ function userSignUp(payload, needSave = false) {
 }
 // 更新用户
 function userSave(user, payload) {
+    Object.keys(payload).forEach(key => {
+        if (!['password', 'email'].includes(key)) {
+            const value = (payload[key] || '').trim();
+            user.set(key, value);
+        }
+    })
     return user.save().then(
       (result) => {
           // 保存成功
