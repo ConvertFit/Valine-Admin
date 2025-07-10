@@ -1,5 +1,5 @@
 'use strict';
-
+require('dotenv').config();
 var AV = require('leanengine');
 
 AV.init({
