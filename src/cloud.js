@@ -97,7 +97,8 @@ function registerUser(userInfo) {
     return userSignUp({
         email: userInfo.email,
         password: userInfo.password,
-        nickname: userInfo.nickName,
+        nickName: userInfo.nickName,
+        nickname: userInfo.nickName, // 官方字段
         huaweiUnionID: userInfo.unionID
     }, true);
 }
