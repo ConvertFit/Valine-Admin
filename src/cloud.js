@@ -97,7 +97,7 @@ function registerUser(userInfo) {
     return userSignUp({
         email: userInfo.email,
         password: userInfo.password,
-        nickName: userInfo.nickName,
+        nickname: userInfo.nickName,
         huaweiUnionID: userInfo.unionID
     }, true);
 }
