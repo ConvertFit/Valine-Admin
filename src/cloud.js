@@ -126,8 +126,26 @@ function sendTrialComment(data) {
     })
 }
 
-AV.Cloud.afterSave('Record', function (request) {
-    const currentRecord = request.object;
+// 更新计数
+function updateCount(result, key, prop) {
+    key = key.toLowerCase();
+    let target = result.find(item => item.key === key);
+    if (!target) {
+        target = {
+            key,
+        }
+        result.push(target);
+    }
+    if (!target[prop]) {
+        target[prop] = 0;
+    }
+    target[prop] += 1;
+
+    return result;
+}
+
+AV.Cloud.afterSave('Record', function (req) {
+    const currentRecord = req.object;
     // 根据转换记录注册用户
     const address = currentRecord.get('address');
     const unionID = currentRecord.get('unionID');
@@ -143,8 +161,8 @@ AV.Cloud.afterSave('Record', function (request) {
     });
 });
 
-AV.Cloud.afterUpdate('Record', function (request) {
-    const currentRecord = request.object;
+AV.Cloud.afterUpdate('Record', function (req) {
+    const currentRecord = req.object;
     // 根据转换记录注册用户
     const address = currentRecord.get('address');
     if (!address) {
@@ -158,9 +176,23 @@ AV.Cloud.afterUpdate('Record', function (request) {
         type: currentRecord.get('type'),
     });
 });
+// 领取签到后发送邮件
+AV.Cloud.afterSave('SigninRecord', function (req) {
+    const currentSigninRecord = req.object;
+    request.post('https://bundless.fitconverter.com/convertSendMail', {
+        from: 'justnotify@qq.com',
+        to: 'jinicgood@qq.com',
+        subject: '签到邮件',
+        html: `
+          <p>unionid：${currentSigninRecord.unionid}</p>
+        `,
+    }, function (error, response, body) {
+        console.log('签到邮件发送成功，响应状态码为:', response && response.statusCode);
+    });
+});
 
-AV.Cloud.afterSave('Comment', function (request) {
-    const currentComment = request.object;
+AV.Cloud.afterSave('Comment', function (req) {
+    const currentComment = req.object;
     // 通知站长
     mailService.notice(currentComment);
     // 通知被 @ 的人
@@ -195,23 +227,7 @@ AV.Cloud.define('resend_mails', function(req) {
         });
     });
 });
-// 更新计数
-function updateCount(result, key, prop) {
-    key = key.toLowerCase();
-    let target = result.find(item => item.key === key);
-    if (!target) {
-        target = {
-            key,
-        }
-        result.push(target);
-    }
-    if (!target[prop]) {
-        target[prop] = 0;
-    }
-    target[prop] += 1;
-    
-    return result;
-}
+
 // 评论统计
 AV.Cloud.define('comment_statistics', function(req) {
     const query = new AV.Query(Comment);
