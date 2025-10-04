@@ -1,7 +1,7 @@
 const AV = require('leanengine');
 const mailService = require('./utilities/mailService');
 const Comment = AV.Object.extend('Comment');
-const request = require('request');
+const axios = require('axios');
 // setting access
 function getAcl() {
     let acl = new AV.ACL();
@@ -179,15 +179,15 @@ AV.Cloud.afterUpdate('Record', function (req) {
 // 领取签到后发送邮件
 AV.Cloud.afterSave('SigninRecord', function (req) {
     const currentSigninRecord = req.object;
-    request.post('https://bundless.fitconverter.com/convertSendMail', {
+    axios.post('https://bundless.fitconverter.com/convertSendMail', {
         from: 'justnotify@qq.com',
         to: 'jinicgood@qq.com',
         subject: '签到邮件',
         html: `
-          <p>unionid：${currentSigninRecord.unionid}</p>
+          <p>unionid：${currentSigninRecord.get('unionid')}</p>
         `,
-    }, function (error, response, body) {
-        console.log('签到邮件发送成功，响应状态码为:', response && response.statusCode);
+    }).then(response => {
+        console.log('签到邮件发送成功，响应状态码为:', response && response.status);
     });
 });
 
@@ -310,7 +310,7 @@ AV.Cloud.define('comment_statistics', function(req) {
 
 AV.Cloud.define('self_wake', function(req) {
     console.log('run self_wake ~ ', process.env.ADMIN_URL);
-    request(process.env.ADMIN_URL, function (error, response, body) {
-        console.log('自唤醒任务执行成功，响应状态码为:', response && response.statusCode);
+    axios.get(process.env.ADMIN_URL).then(response => {
+        console.log('自唤醒任务执行成功，响应状态码为:', response && response.status);
     });
 })
